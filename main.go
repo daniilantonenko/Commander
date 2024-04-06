@@ -21,10 +21,7 @@ var cmdMap map[int]*exec.Cmd
 
 // @title Commander API
 // @version 1.0
-// @description This is a sample server Petstore server.
-
-// @license.name Apache 2.0
-// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+// @description This application provides a REST API for managing and executing commands in the form of bash scripts.
 func main() {
 
 	config()
