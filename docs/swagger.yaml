@@ -1,0 +1,115 @@
+definitions:
+  main.Command:
+    properties:
+      command:
+        type: string
+      id:
+        type: integer
+      output:
+        type: string
+      status:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: This is a sample server Petstore server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  title: Commander API
+  version: "1.0"
+paths:
+  /commands:
+    get:
+      consumes:
+      - application/json
+      description: get accounts
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/main.Command'
+            type: array
+      summary: List commands
+      tags:
+      - commands
+    post:
+      consumes:
+      - application/json
+      description: create accounts
+      parameters:
+      - description: form data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/main.Command'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Command'
+        "400":
+          description: bad request
+          schema:
+            type: string
+        "404":
+          description: bad request
+          schema:
+            type: string
+      summary: Create command
+      tags:
+      - commands
+  /commands/{some_id}:
+    delete:
+      consumes:
+      - application/json
+      description: stop command
+      parameters:
+      - description: id search by some_id
+        in: path
+        name: some_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Command'
+        "404":
+          description: record not found
+          schema:
+            type: string
+      summary: Stop command
+      tags:
+      - commands
+    get:
+      consumes:
+      - application/json
+      description: get accounts
+      parameters:
+      - description: id search by some_id
+        in: path
+        name: some_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.Command'
+        "404":
+          description: record not found
+          schema:
+            type: string
+      summary: Show command
+      tags:
+      - commands
+swagger: "2.0"
