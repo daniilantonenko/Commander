@@ -4,7 +4,7 @@ This application provides a REST API for managing and executing commands in the 
 
 
 ### Configuration
-An example configuration file has been "example.env". Copy this file to the same directory (config) and in the new ".env" enter the credentials needed to connect to your database.
+An example configuration file has been ".env". Edit if other application settings are needed.
 
 ### REST API
 - POST request to /commands --> Create command
@@ -15,6 +15,11 @@ An example configuration file has been "example.env". Copy this file to the same
 
 ### Run
 Be sure to add the configuration file before starting.
+
+#### Golang run
+``` bash
+go run .
+```
 
 #### Docker
 ``` bash
