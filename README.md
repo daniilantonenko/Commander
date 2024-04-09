@@ -4,7 +4,7 @@ This application provides a REST API for managing and executing commands in the 
 
 
 ### Configuration
-An example configuration file has been ".env". Edit if other application settings are needed.
+An example configuration file has been "example.env". Edit if other application settings are needed and rename to ".env".
 
 ### REST API
 - POST request to /commands --> Create command
@@ -16,9 +16,18 @@ An example configuration file has been ".env". Edit if other application setting
 ### Run
 Be sure to add the configuration file before starting.
 
+#### Release
+``` bash
+tar -czf [archive_name]
+cd [app_path]
+mv example.env .env
+nano .env
+./commander
+```
+
 #### Golang run
 ``` bash
-go run .
+go run ./cmd/commander/main.cmd
 ```
 
 #### Docker
