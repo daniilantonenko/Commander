@@ -1,4 +1,4 @@
-project_name: shoffice
+project_name: commander
 builds:
   - env: [CGO_ENABLED=0]
     goos:
