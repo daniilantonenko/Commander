@@ -49,9 +49,9 @@ func main() {
 		httpSwagger.DomID("swagger-ui"),
 	)).Methods(http.MethodGet)
 
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	log.Println("App started!")
 
-	log.Println("App is runing!")
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
 
 var db *gorm.DB
