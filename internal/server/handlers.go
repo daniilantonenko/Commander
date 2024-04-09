@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -10,15 +10,9 @@ import (
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
-)
 
-// Command
-type Command struct {
-	ID      int    `json:"id" gorm:"unique"`
-	Command string `json:"command"`
-	Output  string `json:"output,omitempty"`
-	Status  string `json:"status,omitempty"`
-}
+	"commander/internal/models"
+)
 
 // createCommand godoc
 // @Summary      Create command
@@ -31,8 +25,8 @@ type Command struct {
 // @Failure      400  {string}  string    "bad request"
 // @Failure      404  {string}  string    "bad request"
 // @Router       /commands [post]
-func createCommand(w http.ResponseWriter, r *http.Request) {
-	var cmd Command
+func (s *Server) createCommand(w http.ResponseWriter, r *http.Request) {
+	var cmd models.Command
 	_ = json.NewDecoder(r.Body).Decode(&cmd)
 
 	if cmd.Command == "" || cmd.Output != "" || cmd.Status != "" {
@@ -42,7 +36,7 @@ func createCommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := db.Create(&cmd).Error
+	err := s.db.Create(&cmd).Error
 
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -55,18 +49,18 @@ func createCommand(w http.ResponseWriter, r *http.Request) {
 
 	// Run the command in goroutine
 	go func(command string, id int) {
-		mu.Lock()
-		cmdMap[id] = exec.Command("bash", "-c", command)
-		cmd := cmdMap[id]
-		mu.Unlock()
+		s.mu.Lock()
+		s.cmdMap[id] = exec.Command("bash", "-c", command)
+		cmd := s.cmdMap[id]
+		s.mu.Unlock()
 
 		output, _ := cmd.CombinedOutput()
 
-		mu.Lock()
-		delete(cmdMap, id)
-		mu.Unlock()
+		s.mu.Lock()
+		delete(s.cmdMap, id)
+		s.mu.Unlock()
 
-		db.Model(&Command{}).Where("id = ?", id).Update("output", string(output))
+		s.db.Model(&models.Command{}).Where("id = ?", id).Update("output", string(output))
 	}(cmd.Command, cmd.ID)
 }
 
@@ -78,9 +72,9 @@ func createCommand(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Success      200  {array}   Command
 // @Router       /commands [get]
-func getCommands(w http.ResponseWriter, r *http.Request) {
-	var commands []Command
-	db.Find(&commands)
+func (s *Server) getCommands(w http.ResponseWriter, r *http.Request) {
+	var commands []models.Command
+	s.db.Find(&commands)
 	json.NewEncoder(w).Encode(commands)
 }
 
@@ -94,12 +88,12 @@ func getCommands(w http.ResponseWriter, r *http.Request) {
 // @Success      200  {object}   Command
 // @Failure      404  {string}  string    "record not found"
 // @Router       /commands/{some_id} [get]
-func getCommand(w http.ResponseWriter, r *http.Request) {
+func (s *Server) getCommand(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 
-	var cmd Command
-	err := db.First(&cmd, id).Error
+	var cmd models.Command
+	err := s.db.First(&cmd, id).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		w.WriteHeader(http.StatusNotFound)
@@ -108,12 +102,12 @@ func getCommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mu.Lock()
-	if execCmd, ok := cmdMap[cmd.ID]; ok {
+	s.mu.Lock()
+	if execCmd, ok := s.cmdMap[cmd.ID]; ok {
 		cmd.Status = "Running"
-		cmdMap[cmd.ID] = execCmd
+		s.cmdMap[cmd.ID] = execCmd
 	}
-	mu.Unlock()
+	s.mu.Unlock()
 
 	json.NewEncoder(w).Encode(cmd)
 }
@@ -128,7 +122,7 @@ func getCommand(w http.ResponseWriter, r *http.Request) {
 // @Success      200  {object}   Command
 // @Failure      404  {string}  string    "record not found"
 // @Router       /commands/{some_id} [delete]
-func stopCommand(w http.ResponseWriter, r *http.Request) {
+func (s *Server) stopCommand(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	var id int
 	var err error
@@ -139,19 +133,19 @@ func stopCommand(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mu.Lock()
-	if execCmd, ok := cmdMap[id]; ok {
+	s.mu.Lock()
+	if execCmd, ok := s.cmdMap[id]; ok {
 		err := execCmd.Process.Kill()
 		if err != nil {
 			log.Println("Error stopping command:", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Error stopping command"))
-			mu.Unlock()
+			s.mu.Unlock()
 			return
 		}
-		delete(cmdMap, id)
+		delete(s.cmdMap, id)
 	}
-	mu.Unlock()
+	s.mu.Unlock()
 
 	w.WriteHeader(http.StatusNoContent)
 }

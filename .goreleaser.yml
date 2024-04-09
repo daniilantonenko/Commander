@@ -1,6 +1,7 @@
 project_name: commander
 builds:
-  - env: [CGO_ENABLED=0]
+  - main: ./cmd/commander/main.go
+    env: [CGO_ENABLED=0]
     goos:
       - linux
       - darwin
